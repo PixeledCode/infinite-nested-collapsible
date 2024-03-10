@@ -1,11 +1,11 @@
-import "./App.css";
-import { Dispatch, SetStateAction, useState } from "react";
-import { data, type Item } from "./utils/data";
-import { filterItems } from "./utils/helper";
+import './App.css';
+import { Dispatch, SetStateAction, useState, useId } from 'react';
+import { data, type Item } from './utils/data';
+import { filterItems } from './utils/helper';
 
 function App() {
-  const [expanded, setExpanded] = useState<string>("");
-  const [search, setSearch] = useState<string>("");
+  const [expanded, setExpanded] = useState<string>('');
+  const [search, setSearch] = useState<string>('');
   const [list, setList] = useState<Item[]>(data);
 
   return (
@@ -17,8 +17,9 @@ function App() {
           setList(filterItems(data, e.target.value));
         }}
         value={search}
+        placeholder="Filter..."
       />
-      <ul className="list-wrapper">
+      <div className="list-wrapper">
         {list.length > 0 ? (
           list.map((item) => {
             return item.children ? (
@@ -35,16 +36,16 @@ function App() {
         ) : (
           <>No Result</>
         )}
-      </ul>
+      </div>
     </main>
   );
 }
 
 const Item = ({ data }: { data: Item }) => {
   return (
-    <li key={data.id} className="list-item">
+    <div className="list-item">
       <span>{data.label}</span>
-    </li>
+    </div>
   );
 };
 
@@ -57,21 +58,27 @@ const ExpandableItem = ({
   expanded: string;
   setExpanded: Dispatch<SetStateAction<string>>;
 }) => {
-  const [childExpanded, setChildExpanded] = useState<string>("");
+  const [childExpanded, setChildExpanded] = useState<string>('');
+  const buttonId = useId();
+  const expandedId = useId();
 
   return (
-    <li key={data.id} className="expandable-trigger">
+    <div className="expandable-trigger">
       <button
         aria-expanded={expanded === data.id}
         onClick={() => {
-          setExpanded((id) => (id === data.id ? "" : data.id));
+          setExpanded((id) => (id === data.id ? '' : data.id));
         }}
+        id={buttonId}
+        aria-controls={expandedId}
+        type="button"
       >
         <span>{data.label}</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 320 512"
           width={16}
+          aria-hidden="true"
         >
           <path
             fill="white"
@@ -80,27 +87,27 @@ const ExpandableItem = ({
         </svg>
       </button>
 
-      {expanded === data.id && (
-        <div className="expanded-container">
-          {
-            <ul className="child-container">
-              {data.children?.map((child) => {
-                return child.children ? (
-                  <ExpandableItem
-                    key={child.id}
-                    data={child}
-                    setExpanded={setChildExpanded}
-                    expanded={childExpanded}
-                  />
-                ) : (
-                  <Item data={child} key={child.id} />
-                );
-              })}
-            </ul>
-          }
-        </div>
-      )}
-    </li>
+      <div
+        className="expanded-container"
+        id={expandedId}
+        aria-labelledby={buttonId}
+        role="region"
+        hidden={expanded !== data.id}
+      >
+        {data.children?.map((child) => {
+          return child.children ? (
+            <ExpandableItem
+              key={child.id}
+              data={child}
+              setExpanded={setChildExpanded}
+              expanded={childExpanded}
+            />
+          ) : (
+            <Item data={child} key={child.id} />
+          );
+        })}
+      </div>
+    </div>
   );
 };
 
